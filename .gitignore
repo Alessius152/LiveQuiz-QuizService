@@ -1,0 +1,9 @@
+
+.settings/
+.classpath
+.project
+.mvn/
+
+target/
+
+src/main/resources/firebase-private-credentials.json
