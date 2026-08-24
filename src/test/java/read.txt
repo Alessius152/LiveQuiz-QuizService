@@ -1,0 +1,7 @@
+/*
+ * Importante: Qui quando specifico Authorization valido scrivo "Bearer TOKEN" perché testare con un token fireabase valido
+ * comporterebbe il dover avviare android studio -> debug usb -> applicazione -> accesso SSO -> print del token
+ * 
+ * e quindi qui, nel microservizio mi limito a testare il codice 401 con un Header formattato male e il 201 con un header formattato
+ * bene come ad esempio "Bearer qualsiasi_cosa" 
+*/

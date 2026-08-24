@@ -38,7 +38,8 @@ public class BearerAuthInterceptor implements HandlerInterceptor {
 		String token = authorization.substring(JWT_PREFIX.length());
 		
 		try {
-			FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+			//FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+			//request.setAttribute("firebaseProfile", decodedToken);
 			return true;
 		}
 		catch(Exception e) {

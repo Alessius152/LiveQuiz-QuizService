@@ -18,9 +18,16 @@ public class FirebaseConfig {
 		FileInputStream serviceAccount = new FileInputStream("src/main/resources/firebase-private-credentials.json");
 		GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
 		FirebaseOptions.Builder builder = FirebaseOptions.builder();
-		FirebaseOptions options = builder.setCredentials(credentials).build();
-		FirebaseApp app = FirebaseApp.initializeApp(options);
-		return app;
+
+		if(FirebaseApp.getApps().isEmpty()) {
+			FirebaseOptions options = builder.setCredentials(credentials).build();
+			FirebaseApp app = FirebaseApp.initializeApp(options);
+			return app;
+		}
+		else {
+			return FirebaseApp.getInstance();
+		}
+		
 	}
 	
 }
