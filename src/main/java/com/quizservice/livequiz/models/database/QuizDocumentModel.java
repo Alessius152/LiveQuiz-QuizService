@@ -7,8 +7,6 @@ import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import io.github.robsonkades.uuidv7.UUIDv7;
-
 import com.quizservice.livequiz.models.httpRequests.QuizQuestion;
 
 @Document(collection = "quizzes")
@@ -22,7 +20,7 @@ public class QuizDocumentModel {
     private String creatorId;
     private ArrayList<QuizQuestion> questions;
  
-    private UUID quizId = UUIDv7.randomUUID();
+    private UUID quizId = UUID.randomUUID();
 
 	public QuizDocumentModel() {}
     
