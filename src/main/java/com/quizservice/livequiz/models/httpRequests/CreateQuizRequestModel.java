@@ -40,5 +40,5 @@ public class CreateQuizRequestModel {
 	public void setQuestions(ArrayList<QuizQuestion> questions) {
 		this.questions = questions;
 	}
-    
+	
 }

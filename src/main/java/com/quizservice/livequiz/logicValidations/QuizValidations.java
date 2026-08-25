@@ -1,8 +1,8 @@
 package com.quizservice.livequiz.logicValidations;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
-import com.quizservice.livequiz.errors.validation.InvalidQuizQuestionError;
 import com.quizservice.livequiz.errors.validation.InvalidQuizQuestionReason;
 import com.quizservice.livequiz.models.httpRequests.QuestionAnswerable;
 import com.quizservice.livequiz.models.httpRequests.QuestionType;
@@ -10,9 +10,9 @@ import com.quizservice.livequiz.models.httpRequests.QuizQuestion;
 
 public class QuizValidations {
 	
-	public static ArrayList<InvalidQuizQuestionError> validateQuestions(ArrayList<QuizQuestion> questions) {
+	public static HashMap<String, ArrayList<InvalidQuizQuestionReason>> validateQuestions(ArrayList<QuizQuestion> questions) {
 
-		ArrayList<InvalidQuizQuestionError> invalidQuestions = new ArrayList<InvalidQuizQuestionError>();
+		HashMap<String, ArrayList<InvalidQuizQuestionReason>> invalids = new HashMap<String, ArrayList<InvalidQuizQuestionReason>>();
 		
 		for(int i = 0; i < questions.size(); i++) {
 			QuizQuestion question = questions.get(i);
@@ -20,7 +20,6 @@ public class QuizValidations {
 			ArrayList<QuestionAnswerable> answerables = question.getAnswerables();
 			ArrayList<Short> answers = question.getAnswers();
 			
-			InvalidQuizQuestionError error = null;
 			ArrayList<InvalidQuizQuestionReason> reasons = new ArrayList<InvalidQuizQuestionReason>();
 			
 			boolean isBinary = (type == null) || (type == QuestionType.TRUE_FALSE);
@@ -50,37 +49,58 @@ public class QuizValidations {
 				else {
 					if(answers.size() == 0) reasons.add(InvalidQuizQuestionReason.CLOSED_QUESTION_HAS_NOT_ANSWERS);
 					if(answers.size() > answerables.size()) reasons.add(InvalidQuizQuestionReason.CLOSED_QUESTION_HAS_MORE_ANSWERS_THAN_OPTIONS);
-					if(!validateAnswers(answerables, answers)) reasons.add(InvalidQuizQuestionReason.CLOSED_QUESTION_HAS_ONE_OR_MORE_UNANSWERABLES);
 				}
 			}
 			
 			if(reasons.size() > 0) {
-				error = new InvalidQuizQuestionError((short) i, reasons);
-				invalidQuestions.add(error);
+				invalids.put(String.valueOf(i), reasons);
 			}
 			
 		}
 		
-		return invalidQuestions;
+		return invalids;
 		
 	}
 	
-	public static boolean validateAnswers(ArrayList<QuestionAnswerable> answerables, ArrayList<Short> answers) {
-		/*TODO: Qui mi fermo subito, alla prima domanda unanswerable, vorrei inviare la lista di risposte effettive non opzionate
-		 * al client in modo che possa visionarle.*/
-		for(Short answer : answers) {
-			boolean isAnswerable = false;
-			for(QuestionAnswerable option : answerables) {
-				if(option.getIndex() == answer) {
-					isAnswerable = true;
+	public static HashMap<String, ArrayList<Short>> getUnanswerables(ArrayList<QuizQuestion> questions){
+		
+		HashMap<String, ArrayList<Short>> unanswerablesMap = new HashMap<String, ArrayList<Short>>();
+		
+		for(short i = 0; i < questions.size(); i++) {
+			QuizQuestion question = questions.get(i);
+			
+			ArrayList<QuestionAnswerable> answerables = question.getAnswerables();
+			ArrayList<Short> answers = question.getAnswers();
+			
+			boolean isClosedQuiz = question.getType() != QuestionType.CLOSED_QUESTION;
+			
+			if(isClosedQuiz || (answerables == null) || (answers == null)) {
+				continue;
+			}
+			
+			ArrayList<Short> unanswerables = new ArrayList<Short>();
+			
+			for(short answer : answers) {
+				boolean isAnswerable = false;
+				
+				for(QuestionAnswerable option : answerables) {
+					if(option.getIndex() == answer) {
+						isAnswerable = true;
+					}
+				}
+				
+				if(isAnswerable == false) {
+					unanswerables.add(answer);
 				}
 			}
-			if(isAnswerable == false) {
-				return false;
+			
+			if(unanswerables.size() > 0) {
+				unanswerablesMap.put(String.valueOf(i), unanswerables);
 			}
 		}
 		
-		return true;
+		return unanswerablesMap;
 	}
+	
 	
 }

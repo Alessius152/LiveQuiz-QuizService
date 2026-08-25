@@ -10,8 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.firebase.auth.FirebaseToken;
-import com.quizservice.livequiz.errors.validation.InvalidQuizQuestionError;
+import com.quizservice.livequiz.errors.validation.InvalidQuizQuestionReason;
 import com.quizservice.livequiz.logicValidations.QuizValidations;
 import com.quizservice.livequiz.models.database.QuizDocumentModel;
 import com.quizservice.livequiz.models.httpRequests.CreateQuizRequestModel;
@@ -20,42 +19,55 @@ import com.quizservice.livequiz.repositories.QuizRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 @RestController
 @RequestMapping("/quiz")
 public class QuizController {
 	
 	private final QuizRepository quizRepository;
+	private ObjectMapper objectMapper;
 	
-	public QuizController(QuizRepository quizRepository) {
+	public QuizController(QuizRepository quizRepository, ObjectMapper objectMapper) {
 		this.quizRepository = quizRepository;
+		this.objectMapper = objectMapper;
 	}
 	
 	@PostMapping("/create")
-	public ResponseEntity<HashMap<String, Object>> createQuiz(
+	public ResponseEntity<ObjectNode> createQuiz(
 		HttpServletRequest request,
 		@Valid @RequestBody CreateQuizRequestModel requestBody
 	) {	
 		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
 		ArrayList<QuizQuestion> questions = requestBody.getQuestions();
-		HashMap<String, Object> response = new HashMap<String, Object>();
+		HashMap<String, ArrayList<InvalidQuizQuestionReason>> invalidQuestions = new HashMap<String, ArrayList<InvalidQuizQuestionReason>>();
 		
 		if(questions != null) {
-			ArrayList<InvalidQuizQuestionError> invalidQuestions = QuizValidations.validateQuestions(questions);
+			invalidQuestions = QuizValidations.validateQuestions(questions);
+			
 			if(invalidQuestions.size() > 0) {
-				for(InvalidQuizQuestionError error : invalidQuestions) {
-					response.put(String.valueOf(error.getqIndex()), error.getReasons());
-				}
-				return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(response);
+				ObjectNode invalidQuestionsNode = objectMapper.createObjectNode();
+				invalidQuestionsNode.putPOJO("invalidQuestions", invalidQuestions);
+				return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(invalidQuestionsNode);
+			}
+			
+			HashMap<String, ArrayList<Short>> unanswerables = QuizValidations.getUnanswerables(questions);
+			
+			if(unanswerables.size() > 0) {
+				ObjectNode unanswerablesErrorNode = objectMapper.createObjectNode();
+				unanswerablesErrorNode.putPOJO("unanswerables", unanswerables);
+				return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(unanswerablesErrorNode);
 			}
 		}
 		
-		QuizDocumentModel model = new QuizDocumentModel(requestBody.getName(), requestBody.getDescription(), "FIREBASE_UID", questions);
+		QuizDocumentModel model = new QuizDocumentModel(requestBody.getName(), requestBody.getDescription(), "token.getUid()", questions);
 		quizRepository.insert(model);
+
+		ObjectNode responseNode = objectMapper.createObjectNode();
+		responseNode.putPOJO("quizId", model.getQuizId());
 		
-		response.put("quizId", model.getQuizId());
-		
-		return ResponseEntity.status(HttpStatus.SC_CREATED).body(response);
+		return ResponseEntity.status(HttpStatus.SC_CREATED).body(responseNode);
 	}
 	
 }
