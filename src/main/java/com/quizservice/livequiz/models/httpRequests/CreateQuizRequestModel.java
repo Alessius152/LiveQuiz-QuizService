@@ -16,7 +16,7 @@ public class CreateQuizRequestModel {
 	private String description;
 	
 	@Valid
-	@Size(min = 1, max = 150, message = "If you want to specify some questions, you must specify at least one")
+	@Size(min = 1, max = 150, message = "Questions field length must be between 1 and 150")
 	private ArrayList<QuizQuestion> questions;
 	
 	public CreateQuizRequestModel() {}

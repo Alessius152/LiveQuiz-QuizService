@@ -18,12 +18,16 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.quizservice.livequiz.controllers.QuizController;
 import com.quizservice.livequiz.models.database.QuizDocumentModel;
 import com.quizservice.livequiz.repositories.QuizRepository;
+import com.quizservice.livequiz.services.QuizService;
 
 @WebMvcTest(QuizController.class)
 public class CreateQuizTests {
 	
 	@Autowired
 	private MockMvc mockMvc;
+	
+	@MockitoBean
+	private QuizService quizService;
 	
 	@MockitoBean
 	private QuizRepository quizRepository;

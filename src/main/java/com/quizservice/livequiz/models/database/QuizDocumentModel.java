@@ -5,17 +5,22 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.quizservice.livequiz.models.httpRequests.QuizQuestion;
 
 @Document(collection = "quizzes")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class QuizDocumentModel {
     
     @Id
     private String id; 
     
+    @TextIndexed
     private String name;
+    
     private String description;
     private String creatorId;
     private ArrayList<QuizQuestion> questions;

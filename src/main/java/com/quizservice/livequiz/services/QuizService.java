@@ -2,10 +2,13 @@ package com.quizservice.livequiz.services;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -16,21 +19,16 @@ import com.quizservice.livequiz.models.httpRequests.CreateQuizRequestModel;
 import com.quizservice.livequiz.models.httpRequests.QuizQuestion;
 import com.quizservice.livequiz.repositories.QuizRepository;
 
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ObjectNode;
-
 @Service
 public class QuizService {
 	
 	private QuizRepository quizRepository;
-	private ObjectMapper objectMapper;
 	
-	public QuizService(QuizRepository quizRepository, ObjectMapper objectMapper) {
+	public QuizService(QuizRepository quizRepository) {
 		this.quizRepository = quizRepository;
-		this.objectMapper = objectMapper;
 	}
 	
-	public ResponseEntity<ObjectNode> createQuiz(String userId, CreateQuizRequestModel requestBody) {
+	public ResponseEntity<Map<String, Object>> createQuiz(String userId, CreateQuizRequestModel requestBody) {
 		ArrayList<QuizQuestion> questions = requestBody.getQuestions();
 		HashMap<String, ArrayList<InvalidQuizQuestionReason>> invalidQuestions = new HashMap<String, ArrayList<InvalidQuizQuestionReason>>();
 				
@@ -38,31 +36,29 @@ public class QuizService {
 			invalidQuestions = QuizValidations.validateQuestions(questions);
 				
 			if(invalidQuestions.size() > 0) {
-				ObjectNode invalidQuestionsNode = objectMapper.createObjectNode();
-				invalidQuestionsNode.putPOJO("invalidQuestions", invalidQuestions);
-				return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(invalidQuestionsNode);
+				return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(Map.of(
+					"app_error", "there_are_invalid_questions",
+					"invalidQuestions", invalidQuestions)
+				);
 			}
 				
 			HashMap<String, ArrayList<Short>> unanswerables = QuizValidations.getUnanswerables(questions);
 			
 			if(unanswerables.size() > 0) {
-				ObjectNode unanswerablesErrorNode = objectMapper.createObjectNode();
-				unanswerablesErrorNode.putPOJO("unanswerables", unanswerables);
-				return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(unanswerablesErrorNode);
+				return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(Map.of(
+					"app_error", "there_are_unanswerables",
+					"unanswerables", unanswerables)
+				);
 			}
 		}
 				
 		QuizDocumentModel model = new QuizDocumentModel(requestBody.getName(), requestBody.getDescription(), userId, questions);
 		quizRepository.insert(model);
-
-		ObjectNode responseNode = objectMapper.createObjectNode();
-		responseNode.putPOJO("quizId", model.getQuizId());
 		
-		return ResponseEntity.status(HttpStatus.SC_CREATED).body(responseNode);
+		return ResponseEntity.status(HttpStatus.SC_CREATED).body(Map.of("quizId", model.getQuizId()));
 	}
 	
-
-	public ResponseEntity<ObjectNode> deleteQuiz(String userId, UUID quizId) {
+	public ResponseEntity<Map<String, Object>> deleteQuiz(String userId, UUID quizId) {
 		
 		Long deletedCount = quizRepository.deleteByCreatorIdAndQuizId(userId, quizId);
 		
@@ -70,10 +66,44 @@ public class QuizService {
 			return ResponseEntity.status(HttpStatus.SC_NOT_FOUND).body(null);
 		}
 		
-		ObjectNode deletedNode = objectMapper.createObjectNode();
-		deletedNode.put("deletedCount", deletedCount);
-		
-		return ResponseEntity.status(HttpStatus.SC_OK).body(deletedNode);
+		return ResponseEntity.status(HttpStatus.SC_OK).body(Map.of("deletedCount", deletedCount));
 		
 	}
+	
+	public ResponseEntity<Map<String, Object>> addQuestions(String userId, UUID quizId, ArrayList<QuizQuestion> questions) {
+		
+		Optional<QuizDocumentModel> quizOpt = quizRepository.findByCreatorIdAndQuizId(userId, quizId);
+		
+		if(quizOpt.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.SC_NOT_FOUND).body(null);
+		}
+		
+		QuizDocumentModel quizModel = quizOpt.get();
+		ArrayList<QuizQuestion> quizQuestions = quizModel.getQuestions();
+		
+		if(quizQuestions == null) {
+			quizModel.setQuestions(questions);
+		}
+		else {
+			if((quizQuestions.size() + questions.size()) > 150) {
+				return ResponseEntity.status(HttpStatus.SC_UNPROCESSABLE_ENTITY).body(
+					Map.of("app_error","quiz_questions_count_maximum_reached")
+				);
+			}
+			
+			//TODO: Valida anche la validazione logico-applicativa delle domande da inserire, come hai fatto per l'api createQuiz
+			
+			quizModel.getQuestions().addAll(questions);
+		}
+		
+		quizRepository.save(quizModel);
+		
+		return ResponseEntity.status(HttpStatus.SC_OK).body(null);
+		
+	}
+	
+	public Page<QuizDocumentModel> searchQuizzes(String name, Pageable pageable) {
+		return quizRepository.findByNameContainingIgnoreCase(name, pageable);
+	}
+	
 }
