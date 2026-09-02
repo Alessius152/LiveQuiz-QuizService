@@ -2,11 +2,14 @@ package com.quizservice.livequiz.models.httpRequests;
 
 import java.util.ArrayList;
 
-
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class QuizQuestion {
+	
+	@NotNull
+	private short index;
 	
 	@NotBlank(message = "Any question you add must have a text and at least 2 possible answers")
 	@Size(min = 1, max = 1024, message = "Any question's title must have a length between 1 and 1024 characters")
@@ -52,6 +55,14 @@ public class QuizQuestion {
 
 	public void setAnswers(ArrayList<Short> answers) {
 		this.answers = answers;
+	}
+	
+	public short getIndex() {
+		return index;
+	}
+
+	public void setIndex(short index) {
+		this.index = index;
 	}
 	
 }

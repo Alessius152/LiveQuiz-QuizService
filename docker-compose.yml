@@ -1,0 +1,86 @@
+
+name: livequiz_quizservice_cluster
+
+services:
+
+    livequiz-quizservice-database:
+        image: mongo:7.0
+        container_name: livequiz-quizservice-database
+        volumes:
+            - mongo_data:/data/db
+        networks:
+            - quiz-service-net
+        healthcheck:
+            test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    livequiz-quizservice-backend-1:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: livequiz_quizservice_backend
+        container_name: livequiz-quizservice-backend-1
+        environment:
+            - SERVER_PORT=8080
+            - SPRING_DATA_MONGODB_URI=mongodb://livequiz-quizservice-database:27017/livequiz_quizservice_db
+        depends_on:
+            livequiz-quizservice-database:
+                condition: service_healthy
+        networks:
+            - quiz-service-net
+            - livequiz-messagebrokers-net
+        healthcheck:
+            test: ["CMD", "curl", "http://localhost:8080/"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+            start_period: 15s
+
+    livequiz-quizservice-backend-2:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: livequiz_quizservice_backend
+        container_name: livequiz-quizservice-backend-2
+        environment:
+            - SERVER_PORT=8080
+            - SPRING_DATA_MONGODB_URI=mongodb://livequiz-quizservice-database:27017/livequiz_quizservice_db
+        depends_on:
+            livequiz-quizservice-database:
+                condition: service_healthy
+        networks:
+            - quiz-service-net
+            - livequiz-messagebrokers-net
+        healthcheck:
+            test: ["CMD", "curl", "http://localhost:8080/"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+            start_period: 15s
+
+    livequiz-quizservice-loadbalancer:
+        image: nginx:alpine
+        container_name: livequiz-quizservice-loadbalancer
+        ports:
+            - "8080:8080"
+        volumes:
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            livequiz-quizservice-backend-1:
+                condition: service_healthy
+            livequiz-quizservice-backend-2:
+                condition: service_healthy
+        networks:
+            - quiz-service-net
+            - livequiz-messagebrokers-net
+
+volumes:
+    mongo_data:
+
+networks:
+    quiz-service-net:
+        driver: bridge
+    livequiz-messagebrokers-net:
+        external: true

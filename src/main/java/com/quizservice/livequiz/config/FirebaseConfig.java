@@ -1,11 +1,12 @@
 package com.quizservice.livequiz.config;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
@@ -15,7 +16,8 @@ import com.google.firebase.FirebaseOptions;
 public class FirebaseConfig {
 	
 	@Bean FirebaseApp initializeApp() throws FileNotFoundException, SecurityException, IOException, IllegalStateException {
-		FileInputStream serviceAccount = new FileInputStream("src/main/resources/firebase-private-credentials.json");
+		ClassPathResource resource = new ClassPathResource("firebase-private-credentials.json");
+		InputStream serviceAccount = resource.getInputStream();
 		GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
 		FirebaseOptions.Builder builder = FirebaseOptions.builder();
 
@@ -26,7 +28,7 @@ public class FirebaseConfig {
 		}
 		else {
 			return FirebaseApp.getInstance();
-		}
+		} 
 		
 	}
 	

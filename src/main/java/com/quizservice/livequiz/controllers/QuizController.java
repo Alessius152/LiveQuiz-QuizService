@@ -1,6 +1,5 @@
 package com.quizservice.livequiz.controllers;
 
-import com.quizservice.livequiz.repositories.QuizRepository;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,23 +21,21 @@ import com.google.firebase.auth.FirebaseToken;
 import com.quizservice.livequiz.models.database.QuizDocumentModel;
 import com.quizservice.livequiz.models.httpRequests.AddQuestionsRequestModel;
 import com.quizservice.livequiz.models.httpRequests.CreateQuizRequestModel;
+import com.quizservice.livequiz.models.httpRequests.DeleteQuestionsRequestModel;
 import com.quizservice.livequiz.services.QuizService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 @RestController
 @RequestMapping("/quiz")
 public class QuizController {
 	
-	private final QuizRepository quizRepository;
 	private final QuizService quizService;
 	
-	public QuizController(QuizService quizService, ObjectMapper objectMapper, QuizRepository quizRepository) {
+	public QuizController(QuizService quizService, ObjectMapper objectMapper) {
 		this.quizService = quizService;
-		this.quizRepository = quizRepository;
 	}
 	
 	@PostMapping("/create")
@@ -74,6 +71,16 @@ public class QuizController {
 		Page<QuizDocumentModel> quizzes = quizService.searchQuizzes(quizTitle, fixedPageable);
 		
 		return ResponseEntity.status(HttpStatus.SC_OK).body(Map.of("quizzesPage", quizzes));
+	}
+	
+	@PostMapping("/removeQuestions/{quizId}")
+	public ResponseEntity<Map<String, Object>> removeQuesstions(
+		@PathVariable("quizId") String quizId,
+		HttpServletRequest request,
+		@Valid @RequestBody DeleteQuestionsRequestModel requestBody
+	) {
+		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
+		return ResponseEntity.status(200).body(null);
 	}
 	
 }

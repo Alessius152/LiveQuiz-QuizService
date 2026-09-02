@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.repository.Query;
 
 import com.quizservice.livequiz.models.database.QuizDocumentModel;
 
-public interface QuizRepository extends MongoRepository<QuizDocumentModel, String> {
+public interface QuizRepository extends MongoRepository<QuizDocumentModel, String>, QuizRepositoryCustom {
 	
 	long deleteByCreatorIdAndQuizId(String creatorId, UUID quizId);
 
