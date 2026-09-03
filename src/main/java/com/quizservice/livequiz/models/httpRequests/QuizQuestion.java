@@ -8,6 +8,12 @@ import jakarta.validation.constraints.Size;
 
 public class QuizQuestion {
 	
+	@Override
+	public String toString() {
+		return "QuizQuestion [index=" + index + ", question=" + question + ", type=" + type + ", answerables="
+				+ answerables + ", answers=" + answers + "]";
+	}
+
 	@NotNull
 	private short index;
 	
