@@ -168,4 +168,8 @@ public class QuizService {
 		return quizRepository.findByNameContainingIgnoreCase(name, pageable);
 	}
 	
+	public ResponseEntity<Object> getQuiz(UUID quizId) {
+		return ResponseEntity.ok().body(quizRepository.getQuiz(quizId));
+	}
+	
 }

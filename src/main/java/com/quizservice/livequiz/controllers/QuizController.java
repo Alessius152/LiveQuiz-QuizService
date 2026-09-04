@@ -62,7 +62,7 @@ public class QuizController {
 		return quizService.addQuestions("token.getUid()", quizId, requestBody.getQuestions());
 	}
 	
-	@GetMapping("/{quizTitle}")
+	@GetMapping("search/{quizTitle}")
 	public ResponseEntity<Map<String, Object>> fetchQuizzes(
 		@PathVariable("quizTitle") String quizTitle,
 		Pageable pageable
@@ -71,6 +71,11 @@ public class QuizController {
 		Page<QuizDocumentModel> quizzes = quizService.searchQuizzes(quizTitle, fixedPageable);
 		
 		return ResponseEntity.status(HttpStatus.SC_OK).body(Map.of("quizzesPage", quizzes));
+	}
+	
+	@GetMapping("/{quizId}")
+	public ResponseEntity<Object> fetchQuiz(@PathVariable("quizId") UUID quizId) {
+		return quizService.getQuiz(quizId);
 	}
 	
 	@PostMapping("/removeQuestions/{quizId}")

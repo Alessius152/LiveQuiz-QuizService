@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import com.mongodb.client.result.UpdateResult;
 import com.quizservice.livequiz.models.database.QuizDocumentModel;
+import com.quizservice.livequiz.models.database.summaries.FetchQuizSummaryModel;
 import com.quizservice.livequiz.models.httpRequests.QuizQuestion;
 
 public class QuizRepositoryCustomImpl implements QuizRepositoryCustom {
@@ -28,6 +29,17 @@ public class QuizRepositoryCustomImpl implements QuizRepositoryCustom {
 		
 		return result;
 		
+	}
+	
+	public FetchQuizSummaryModel getQuiz(UUID quizId) {
+		Query query = new Query(Criteria.where("quizId").is(quizId));
+		
+		query.fields()
+			.include("name").include("description").include("creatorId")
+			.include("questions.index").include("questions.question")
+			.include("questions.type").include("questions.answerables");
+		
+		return mongoTemplate.findOne(query, FetchQuizSummaryModel.class);
 	}
 	
 }
