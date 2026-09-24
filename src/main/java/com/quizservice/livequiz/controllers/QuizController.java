@@ -42,14 +42,14 @@ public class QuizController {
 	public ResponseEntity<Map<String, Object>> createQuiz(HttpServletRequest request,
 		@Valid @RequestBody CreateQuizRequestModel requestBody
 	) {	
-		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
-		return quizService.createQuiz("token.getUid()", requestBody);
+		FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
+		return quizService.createQuiz(token, requestBody);
 	}
 	
 	@DeleteMapping("/delete/{quizId}")
 	public ResponseEntity<Map<String, Object>> deleteQuiz(HttpServletRequest request, @PathVariable("quizId") UUID quizId) {
-		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
-		return quizService.deleteQuiz("token.getUid()", quizId);
+		FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
+		return quizService.deleteQuiz(token, quizId);
 	}
 	
 	@PutMapping("/addQuestions/{quizId}")
@@ -58,8 +58,8 @@ public class QuizController {
 		@PathVariable("quizId") UUID quizId,
 		@Valid @RequestBody AddQuestionsRequestModel requestBody
 	) {
-		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
-		return quizService.addQuestions("token.getUid()", quizId, requestBody.getQuestions());
+		FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
+		return quizService.addQuestions(token, quizId, requestBody.getQuestions());
 	}
 	
 	@GetMapping("search/{quizTitle}")
@@ -84,7 +84,7 @@ public class QuizController {
 		HttpServletRequest request,
 		@Valid @RequestBody DeleteQuestionsRequestModel requestBody
 	) {
-		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
+		FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
 		return ResponseEntity.status(200).body(null);
 	}
 	
