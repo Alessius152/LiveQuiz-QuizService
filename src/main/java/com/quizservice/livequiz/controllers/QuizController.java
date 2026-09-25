@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.firebase.auth.FirebaseToken;
 import com.quizservice.livequiz.models.database.QuizDocumentModel;
+import com.quizservice.livequiz.models.database.summaries.FetchQuizzesListSummaryModel;
 import com.quizservice.livequiz.models.httpRequests.AddQuestionsRequestModel;
 import com.quizservice.livequiz.models.httpRequests.CreateQuizRequestModel;
 import com.quizservice.livequiz.models.httpRequests.DeleteQuestionsRequestModel;
@@ -42,14 +43,14 @@ public class QuizController {
 	public ResponseEntity<Map<String, Object>> createQuiz(HttpServletRequest request,
 		@Valid @RequestBody CreateQuizRequestModel requestBody
 	) {	
-		FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
-		return quizService.createQuiz(token, requestBody);
+		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
+		return quizService.createQuiz("token.getUid()", requestBody);
 	}
 	
 	@DeleteMapping("/delete/{quizId}")
 	public ResponseEntity<Map<String, Object>> deleteQuiz(HttpServletRequest request, @PathVariable("quizId") UUID quizId) {
-		FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
-		return quizService.deleteQuiz(token, quizId);
+		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
+		return quizService.deleteQuiz("token.getUid()", quizId);
 	}
 	
 	@PutMapping("/addQuestions/{quizId}")
@@ -58,8 +59,8 @@ public class QuizController {
 		@PathVariable("quizId") UUID quizId,
 		@Valid @RequestBody AddQuestionsRequestModel requestBody
 	) {
-		FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
-		return quizService.addQuestions(token, quizId, requestBody.getQuestions());
+		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
+		return quizService.addQuestions("token.getUid()", quizId, requestBody.getQuestions());
 	}
 	
 	@GetMapping("search/{quizTitle}")
@@ -68,12 +69,12 @@ public class QuizController {
 		Pageable pageable
 	){
 		Pageable fixedPageable = PageRequest.of(pageable.getPageNumber(), 20, pageable.getSort());
-		Page<QuizDocumentModel> quizzes = quizService.searchQuizzes(quizTitle, fixedPageable);
+		Page<FetchQuizzesListSummaryModel> quizzes = quizService.searchQuizzes(quizTitle, fixedPageable);
 		
 		return ResponseEntity.status(HttpStatus.SC_OK).body(Map.of("quizzesPage", quizzes));
 	}
 	
-	@GetMapping("/{quizId}")
+	@GetMapping("/single/{quizId}")
 	public ResponseEntity<Object> fetchQuiz(@PathVariable("quizId") UUID quizId) {
 		return quizService.getQuiz(quizId);
 	}

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.quizservice.livequiz.errors.validation.InvalidQuizQuestionReason;
 import com.quizservice.livequiz.logicValidations.QuizValidations;
 import com.quizservice.livequiz.models.database.QuizDocumentModel;
+import com.quizservice.livequiz.models.database.summaries.FetchQuizzesListSummaryModel;
 import com.quizservice.livequiz.models.httpRequests.CreateQuizRequestModel;
 import com.quizservice.livequiz.models.httpRequests.QuizQuestion;
 import com.quizservice.livequiz.models.kafka.QuizCreatedEventMaker;
@@ -164,7 +165,7 @@ public class QuizService {
 		
 	}
 	
-	public Page<QuizDocumentModel> searchQuizzes(String name, Pageable pageable) {
+	public Page<FetchQuizzesListSummaryModel> searchQuizzes(String name, Pageable pageable) {
 		return quizRepository.findByNameContainingIgnoreCase(name, pageable);
 	}
 	
