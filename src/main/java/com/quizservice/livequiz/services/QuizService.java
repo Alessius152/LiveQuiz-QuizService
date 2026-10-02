@@ -23,6 +23,8 @@ import com.quizservice.livequiz.models.httpRequests.QuizQuestion;
 import com.quizservice.livequiz.models.kafka.QuizCreatedEventMaker;
 import com.quizservice.livequiz.repositories.QuizRepository;
 
+//TODO in un quiz, per ora, tutte le domande devono avere index univoco, ma le answerables possono avere index doppione, e questo è un BUG
+
 @Service
 public class QuizService {
 	
@@ -73,8 +75,9 @@ public class QuizService {
 				);
 			}
 		}
-				
-		QuizDocumentModel model = new QuizDocumentModel(requestBody.getName(), requestBody.getDescription(), userId, questions);
+		
+		final short version = 0;
+		QuizDocumentModel model = new QuizDocumentModel(version, requestBody.getName(), requestBody.getDescription(), userId, questions);
 		
 		quizRepository.insert(model);
 		producerService.sendQuizCreated(QuizCreatedEventMaker.make(model));

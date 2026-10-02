@@ -47,11 +47,27 @@ public class QuizController {
 		return quizService.createQuiz("token.getUid()", requestBody);
 	}
 	
-	@DeleteMapping("/delete/{quizId}")
+	/*@DeleteMapping("/delete/{quizId}")
 	public ResponseEntity<Map<String, Object>> deleteQuiz(HttpServletRequest request, @PathVariable("quizId") UUID quizId) {
 		//FirebaseToken token = (FirebaseToken) request.getAttribute("firebaseProfile");
 		return quizService.deleteQuiz("token.getUid()", quizId);
-	}
+	}*/ /*adesso che gestisco le versioni dei quiz, la situazione riguardo questa API diventa più complicata di quello che era.
+	Innanzitutto devo eliminare tutte le versioni, ma di base, come anche prima, se un client richiede una versione del quiz
+	e il quiz non c'è? succede che riceve un 404 e non può renderizzare la stanza, anche se può entrarci.
+	
+	Di base bisognerebbe cancellare in gruppo le versioni del quiz, quando viene richiesto dal creatore di esso, solo quando
+	la Garbage Collection del Realtime Service ci dice tramite kafka che quel quiz non è in uso da nessuna stanza.
+	
+		Per "Garbage Collection del Realtime Service" si intende, tipicamente, un software che a ogni termine partita controlla
+		se quel quiz, con il termine di quella partita, ha chiuso il suo ciclo di vita di utilizzo.
+		
+		Perché se ci sono 10 stanze che usano lo stesso quiz, solo al termine della decima si attiverà la Garbage Collection,
+		ma per tutte e 10 verrà eseguito il controllo.
+		
+		Entrando un pò nello specifico del realtime service, per la copia mutabile dell'entità quiz:{uuid} ci sarà un contatore
+		che incrementerà e decrementerà a seconda di quante stanze vengono inizializzate/finalizzate con, come immutableQuizSnapshot.quizId
+		quello stesso quiz.
+	*/
 	
 	@PutMapping("/addQuestions/{quizId}")
 	public ResponseEntity<Map<String, Object>> addQuestions(

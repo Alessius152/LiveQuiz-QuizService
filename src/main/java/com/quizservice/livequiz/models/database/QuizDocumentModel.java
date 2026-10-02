@@ -24,12 +24,15 @@ public class QuizDocumentModel {
     private String description;
     private String creatorId;
     private ArrayList<QuizQuestion> questions;
- 
     private UUID quizId = UUID.randomUUID();
-
+    
+    private short version;
+    
 	public QuizDocumentModel() {}
     
-    public QuizDocumentModel(String name, String description, String creatorId, ArrayList<QuizQuestion> questions) {
+    public QuizDocumentModel(short version, String name, String description, String creatorId, ArrayList<QuizQuestion> questions) {
+    	
+    	this.version = version;
     	this.name = name;
     	
     	if((description == null) || (description.trim().isEmpty())) {
@@ -90,4 +93,13 @@ public class QuizDocumentModel {
 	public void setQuizId(UUID quizId) {
 		this.quizId = quizId;
 	}
+
+	public short getVersion() {
+		return version;
+	}
+
+	public void setVersion(short version) {
+		this.version = version;
+	}
+
 }
