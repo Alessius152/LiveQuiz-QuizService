@@ -24,15 +24,16 @@ public class QuizDocumentModel {
     private String description;
     private String creatorId;
     private ArrayList<QuizQuestion> questions;
-    private UUID quizId = UUID.randomUUID();
+    private UUID quizId;
     
     private short version;
     
 	public QuizDocumentModel() {}
     
-    public QuizDocumentModel(short version, String name, String description, String creatorId, ArrayList<QuizQuestion> questions) {
+    public QuizDocumentModel(short version, UUID quizId, String name, String description, String creatorId, ArrayList<QuizQuestion> questions) {
     	
     	this.version = version;
+    	this.quizId = quizId;
     	this.name = name;
     	
     	if((description == null) || (description.trim().isEmpty())) {

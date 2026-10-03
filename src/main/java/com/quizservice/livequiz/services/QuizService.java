@@ -1,6 +1,7 @@
 package com.quizservice.livequiz.services;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,23 +17,29 @@ import org.springframework.stereotype.Service;
 
 import com.quizservice.livequiz.errors.validation.InvalidQuizQuestionReason;
 import com.quizservice.livequiz.logicValidations.QuizValidations;
+import com.quizservice.livequiz.models.database.LastQuizReleaseDocumentModel;
 import com.quizservice.livequiz.models.database.QuizDocumentModel;
 import com.quizservice.livequiz.models.database.summaries.FetchQuizzesListSummaryModel;
 import com.quizservice.livequiz.models.httpRequests.CreateQuizRequestModel;
 import com.quizservice.livequiz.models.httpRequests.QuizQuestion;
 import com.quizservice.livequiz.models.kafka.QuizCreatedEventMaker;
+import com.quizservice.livequiz.models.kafka.QuizNewVersionAvailableEvent;
+import com.quizservice.livequiz.models.kafka.QuizNewVersionReleasedEventMaker;
+import com.quizservice.livequiz.repositories.LastReleasesRepository;
 import com.quizservice.livequiz.repositories.QuizRepository;
 
 //TODO in un quiz, per ora, tutte le domande devono avere index univoco, ma le answerables possono avere index doppione, e questo è un BUG
 
 @Service
 public class QuizService {
-	
+
 	private QuizRepository quizRepository;
+	private LastReleasesRepository lastReleasesRepository;
 	private final KafkaQuizProducerService producerService;
 	
-	public QuizService(QuizRepository quizRepository, KafkaQuizProducerService producerService) {
+	public QuizService(QuizRepository quizRepository, LastReleasesRepository lastReleasesRepository, KafkaQuizProducerService producerService) {
 		this.quizRepository = quizRepository;
+		this.lastReleasesRepository = lastReleasesRepository;
 		this.producerService = producerService;
 	}
 	
@@ -77,8 +84,12 @@ public class QuizService {
 		}
 		
 		final short version = 0;
-		QuizDocumentModel model = new QuizDocumentModel(version, requestBody.getName(), requestBody.getDescription(), userId, questions);
+		final UUID quizId = UUID.randomUUID();
 		
+		LastQuizReleaseDocumentModel firstReleaseModel = new LastQuizReleaseDocumentModel(quizId, version);
+		QuizDocumentModel model = new QuizDocumentModel(version, quizId, requestBody.getName(), requestBody.getDescription(), userId, questions);
+		
+		lastReleasesRepository.insert(firstReleaseModel);
 		quizRepository.insert(model);
 		producerService.sendQuizCreated(QuizCreatedEventMaker.make(model));
 		
@@ -118,8 +129,15 @@ public class QuizService {
 		}
 		
 		questions.sort(Comparator.comparing(QuizQuestion::getIndex));
+
+		Optional<LastQuizReleaseDocumentModel> quizReleaseOpt = lastReleasesRepository.findByQuizId(quizId);
+		if(quizReleaseOpt.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+		}
+
+		LastQuizReleaseDocumentModel quizReleaseModel = quizReleaseOpt.get();
 		
-		Optional<QuizDocumentModel> quizOpt = quizRepository.findByCreatorIdAndQuizId(userId, quizId);
+		Optional<QuizDocumentModel> quizOpt = quizRepository.findByCreatorIdAndQuizIdAndVersion(userId, quizId, quizReleaseOpt.get().getLastRelease());
 		if(quizOpt.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
 		}
@@ -137,7 +155,16 @@ public class QuizService {
 		
 		int dbQuestionsCount = (quizQuestions != null) ? quizQuestions.size() : 0;
 		int payloadQuestionsCount = questions.size();
-		int expectedSize = dbQuestionsCount + payloadQuestionsCount;
+		int expectedSize = dbQuestionsCount + payloadQuestionsCount; /*una volta dichiarato 
+		- quante domande ci sono già (esempio: 3)
+		- quante ne voglio aggiungere (esempio: 3)
+		mi aspetto che il merge di queste due quantità sia 6, perché , se con lo stream.concat
+		che controllo in seguito ottengo un numero minore, vuol dire che ci sono dei doppioni,
+		quindi
+		(aggiungo una o più domande nel payload con indice pari) 
+			OPPURE 
+		(specifico nel payload domande con indici già presenti nei dati di quel quiz)
+		*/
 		
 		Stream<Short> payloadQuestionIndexes = questions.stream().map(QuizQuestion::getIndex);
 		Stream<Short> dbQuestionIndexes = (quizQuestions != null) ? quizQuestions.stream().map(QuizQuestion::getIndex) : Stream.empty();
@@ -162,8 +189,28 @@ public class QuizService {
 				)
 			);
 		}
+
+		short newVersion = (short) (quizReleaseModel.getLastRelease() + 1);
 		
-		quizRepository.pushQuestions(userId, quizId, questions);
+		ArrayList<QuizQuestion> mergedQuestions = new ArrayList<QuizQuestion>();
+		
+		if ((quizModel.getQuestions() != null) && (! quizModel.getQuestions().isEmpty())) {
+			mergedQuestions.addAll(quizModel.getQuestions());
+		}
+		
+		mergedQuestions.addAll(questions);
+		mergedQuestions.sort(Comparator.comparing(QuizQuestion::getIndex));
+		
+		long hasUpdatedVersion = lastReleasesRepository.updateByLastRelease(quizId, quizReleaseModel.getLastRelease(), newVersion);
+		
+		if(hasUpdatedVersion != 1) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+		}
+		
+		QuizDocumentModel model = new QuizDocumentModel(newVersion, quizModel.getQuizId(), quizModel.getName(), quizModel.getDescription(), userId, mergedQuestions);
+		quizRepository.insert(model);
+		producerService.sendQuizHasNewVersion(QuizNewVersionReleasedEventMaker.make(quizModel.getQuizId(), newVersion, questions));
+
 		return ResponseEntity.status(HttpStatus.OK).body(null);
 		
 	}

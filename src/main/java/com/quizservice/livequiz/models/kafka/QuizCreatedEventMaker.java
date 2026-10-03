@@ -15,7 +15,7 @@ public class QuizCreatedEventMaker {
 		ArrayList<QuestionIndexing> questionsIndexing = new ArrayList<QuestionIndexing>();
 		ArrayList<QuizQuestion> questions = model.getQuestions();
 		
-		QuizCreatedEvent event = new QuizCreatedEvent(model.getQuizId(), model.getCreatorId(), questionsIndexing);
+		QuizCreatedEvent event = new QuizCreatedEvent(model.getVersion(), model.getQuizId(), model.getCreatorId(), questionsIndexing);
 
 		System.out.println(questions.toString());
 		if((questions == null) || questions.isEmpty()) {

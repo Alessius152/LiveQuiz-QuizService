@@ -11,6 +11,6 @@ public interface QuizRepository extends MongoRepository<QuizDocumentModel, Strin
 	
 	long deleteByCreatorIdAndQuizId(String creatorId, UUID quizId);
 
-	Optional<QuizDocumentModel> findByCreatorIdAndQuizId(String creatorId, UUID quizId);
+	Optional<QuizDocumentModel> findByCreatorIdAndQuizIdAndVersion(String creatorId, UUID quizId, short version);
 	
 }

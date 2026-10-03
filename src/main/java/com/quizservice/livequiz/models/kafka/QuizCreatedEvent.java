@@ -8,10 +8,11 @@ public class QuizCreatedEvent {
 	private ArrayList<Object> quiz;
 	private ArrayList<QuestionIndexing> indexing;
 
-	public QuizCreatedEvent(UUID quizId, String creatorId, ArrayList<QuestionIndexing> questionsIndexing) {
+	public QuizCreatedEvent(short version, UUID quizId, String creatorId, ArrayList<QuestionIndexing> questionsIndexing) {
 		this.quiz = new ArrayList<Object>();
 		this.quiz.add(creatorId);
 		this.quiz.add(quizId);
+		this.quiz.add(version);
 		
 		this.indexing = questionsIndexing;
 	}
@@ -19,7 +20,6 @@ public class QuizCreatedEvent {
 	public ArrayList<Object> getQuiz() {
 		return quiz;
 	}
-
 
 	public void setQuiz(ArrayList<Object> quiz) {
 		this.quiz = quiz;

@@ -7,6 +7,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import com.quizservice.livequiz.models.kafka.QuizCreatedEvent;
+import com.quizservice.livequiz.models.kafka.QuizNewVersionAvailableEvent;
 
 @Service
 public class KafkaQuizProducerService {
@@ -21,6 +22,12 @@ public class KafkaQuizProducerService {
     public void sendQuizCreated(QuizCreatedEvent eventData) {
         ProducerRecord<String, Object> record = new ProducerRecord<>(TOPIC, eventData);
         record.headers().add("eventName", "QuizCreatedEvent".getBytes(StandardCharsets.US_ASCII));
+        kafkaTemplate.send(record);
+    }
+    
+    public void sendQuizHasNewVersion(QuizNewVersionAvailableEvent eventData) {
+        ProducerRecord<String, Object> record = new ProducerRecord<>(TOPIC, eventData);
+        record.headers().add("eventName", "QuizNewVersionAvailableEvent".getBytes(StandardCharsets.US_ASCII));
         kafkaTemplate.send(record);
     }
 }
