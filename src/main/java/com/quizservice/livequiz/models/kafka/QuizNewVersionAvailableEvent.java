@@ -17,6 +17,12 @@ public class QuizNewVersionAvailableEvent {
 		this.releaseNumber = releaseNumber;
 	}
 	
+	@Override
+	public String toString() {
+		return "QuizNewVersionAvailableEvent [quizId=" + quizId + ", releaseNumber=" + releaseNumber
+				+ ", addedQuestions=" + addedQuestions + "]";
+	}
+
 	public QuizNewVersionAvailableEvent(UUID quizId, short releaseNumber, ArrayList<QuestionIndexing> addedQuestions) {
 		this.quizId = quizId;
 		this.releaseNumber = releaseNumber;
